@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "myfridge"
+version = "0.1.0"
+authors = [
+    {name = "Astrid Benamou", email = "astrid.benamou@outlook.com"},
+]
+description = "Sort out your grocery shopping and weekly menu"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "BSD-3-Clause"}
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
