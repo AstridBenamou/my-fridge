@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import json
 
 def get_menu(data_recipes): 
 
@@ -42,27 +43,30 @@ def show_menu(menu):
     st.title('My menu for the week')
     st.write(menu)
 
-def get_groceries(ingredients_list, categories_data_file):
-    df_categories = pd.read_csv(categories_data_file)
+def get_groceries(ingredients, json_file):
+    with open(json_file) as f:
+        data_json = json.load(f)
+    
+    df_json = pd.DataFrame([(category, item["name"], item["quantity"]) for category, items in data_json.items() for item in items], columns=['Category', 'Item', 'Available_Quantity'])
     # Creating a dictionary with ingredient counts
     ingredient_count = {}
-    for ingredient in ingredients_list:
+    for ingredient in ingredients:
         if ingredient in ingredient_count:
             ingredient_count[ingredient] += 1
         else:
             ingredient_count[ingredient] = 1
 
-    df_ingredient_count = pd.DataFrame.from_dict(ingredient_count, orient='index', columns=['Ingredients'])
-    final_groceries = df_ingredient_count.merge(df_categories.set_index(['Ingredients']), right_index=True, left_index=True)
-    final_groceries.sort_values('Category', inplace=True)
+    df_ingredient_count = pd.DataFrame.from_dict(ingredient_count, orient='index', columns=['Quantity'])
+    groceries = df_ingredient_count.merge(df_json.set_index('Item'), right_index=True, left_index=True)
+    groceries['Quantity'] = groceries.apply(lambda row: max(0, row['Quantity'] - row['Available_Quantity']), axis=1)
+    groceries.drop('Available_Quantity', axis = 1, inplace =True)
+    return(groceries)
+        
 
-    grouped_groceries = final_groceries.groupby('Category')
-    return(grouped_groceries)
-
-   
-def show_groceries(grouped_groceries):
+def show_groceries(final_groceries):
     # Create a Streamlit app
     st.title('My grocery list:')
+    grouped_groceries = final_groceries.groupby('Category')
 
     # Iterate through each group and display as tables
     for category, group in grouped_groceries:
